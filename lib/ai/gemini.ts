@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 // Initialize the client
 export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// --- 1. RESTORED FUNCTIONS (Fixes the build error) ---
+// --- 1. RESTORED FUNCTIONS (With Config Support) ---
 
 export async function geminiText(model: string, prompt: string) {
   try {
@@ -11,7 +11,6 @@ export async function geminiText(model: string, prompt: string) {
       model: model,
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
-    // FIX: Access .text directly (it's a getter property now, not a function)
     return result.text || "No response generated."; 
   } catch (e) {
     console.error("Gemini Text Error:", e);
@@ -19,7 +18,8 @@ export async function geminiText(model: string, prompt: string) {
   }
 }
 
-export async function geminiVision(model: string, prompt: string, imageBase64: string, mimeType: string) {
+// UPDATE: Added 'config' parameter to match what router.ts sends
+export async function geminiVision(model: string, prompt: string, imageBase64: string, mimeType: string, config?: any) {
   try {
     const result = await ai.models.generateContent({
       model: model,
@@ -31,9 +31,9 @@ export async function geminiVision(model: string, prompt: string, imageBase64: s
             { inlineData: { mimeType: mimeType, data: imageBase64 } }
           ]
         }
-      ]
+      ],
+      config: config, // We pass the config (like temperature) to the AI
     });
-    // FIX: Access .text directly
     return result.text || "No response generated.";
   } catch (e) {
     console.error("Gemini Vision Error:", e);
@@ -41,7 +41,7 @@ export async function geminiVision(model: string, prompt: string, imageBase64: s
   }
 }
 
-// --- 2. NEW FUNCTION (For your Inventory Page) ---
+// --- 2. RECEIPT SCANNER FUNCTION ---
 
 export async function analyzeReceipt(imageBase64: string) {
   const prompt = `
@@ -55,7 +55,6 @@ export async function analyzeReceipt(imageBase64: string) {
     Return ONLY a JSON array.
   `;
 
-  // We define the schema using simple strings to avoid import errors
   const schema = {
     type: "ARRAY",
     items: {
@@ -94,7 +93,6 @@ export async function analyzeReceipt(imageBase64: string) {
       },
     });
 
-    // FIX: Access .text directly
     const text = response.text;
     if (!text) return [];
     
