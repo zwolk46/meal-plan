@@ -1,29 +1,39 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export async function addItem(formData: FormData) {
   const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData?.user;
 
-  if (!user) redirect("/login?message=Please sign in.");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const name = String(formData.get("name") ?? "").trim();
-  const qty = Number(formData.get("qty") ?? 1);
-  const unit = String(formData.get("unit") ?? "count").trim() || "count";
+  if (!user) {
+    return redirect("/login?message=You must be logged in");
+  }
 
-  const { error } = await supabase.from("inventory_items").insert({
+  const item_name = formData.get("item_name") as string;
+  const category = formData.get("category") as string;
+  const location = formData.get("location") as string;
+  const quantity_grams = parseFloat(formData.get("quantity_grams") as string);
+  const expiry_date = formData.get("expiry_date") as string || null;
+
+  const { error } = await supabase.from("inventory_master").insert({
     user_id: user.id,
-    name,
-    qty,
-    unit,
-    location: "pantry",
+    item_name,
+    category,
+    location,
+    quantity_grams,
+    original_qty: quantity_grams, // Set initial weight as original
+    expiry_date,
   });
 
-  if (error) redirect(`/inventory?message=${encodeURIComponent(error.message)}`);
+  if (error) {
+    console.error(error);
+    return redirect("/inventory?message=Failed to add item");
+  }
 
-  revalidatePath("/inventory");
+  return redirect("/inventory?message=Item added successfully");
 }
