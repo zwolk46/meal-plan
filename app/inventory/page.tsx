@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { addItem } from "./actions.ts";
+import { addItem } from "./actions";
 import { signOut } from "../login/actions";
 
 export default async function InventoryPage({
