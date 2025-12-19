@@ -11,7 +11,8 @@ export async function geminiText(model: string, prompt: string) {
       model: model,
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
-    return result.response.text();
+    // FIX: Access .text directly (it's a getter property now, not a function)
+    return result.text || "No response generated."; 
   } catch (e) {
     console.error("Gemini Text Error:", e);
     return "Error generating text.";
@@ -32,7 +33,8 @@ export async function geminiVision(model: string, prompt: string, imageBase64: s
         }
       ]
     });
-    return result.response.text();
+    // FIX: Access .text directly
+    return result.text || "No response generated.";
   } catch (e) {
     console.error("Gemini Vision Error:", e);
     return "Error analyzing image.";
@@ -92,7 +94,8 @@ export async function analyzeReceipt(imageBase64: string) {
       },
     });
 
-    const text = response.text();
+    // FIX: Access .text directly
+    const text = response.text;
     if (!text) return [];
     
     return JSON.parse(text);
